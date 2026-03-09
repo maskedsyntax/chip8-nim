@@ -35,6 +35,7 @@ proc render*(d: Display, c: Chip8) =
           frame.add(" ")
       frame.add("\n")
     stdout.write(frame)
+    stdout.flushFile()
   elif d.window != nil:
     var pixels: array[SCREEN_WIDTH * SCREEN_HEIGHT, uint32]
     for i in 0 ..< c.display.len:

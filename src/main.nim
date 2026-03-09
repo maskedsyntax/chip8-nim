@@ -56,11 +56,11 @@ proc main() =
   let cycleTime = 1.0 / float(ips)
   let timerTime = 1.0 / 60.0
 
-  var lastCycle = cpuTime()
-  var lastTimer = cpuTime()
+  var lastCycle = epochTime()
+  var lastTimer = epochTime()
 
   while true:
-    let now = cpuTime()
+    let now = epochTime()
 
     if now - lastCycle >= cycleTime:
       if debugMode:
