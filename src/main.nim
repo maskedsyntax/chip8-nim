@@ -1,5 +1,5 @@
 # src/main.nim
-import std/[os, times, parseopt, strutils, strformat]
+import std/[os, times, parseopt, strutils, strformat, monotimes]
 import ./chip8, ./display, ./input, ./debug
 
 proc main() =
@@ -53,16 +53,16 @@ proc main() =
 
   defer: d.cleanup()
 
-  let cycleTime = 1.0 / float(ips)
-  let timerTime = 1.0 / 60.0
+  let cycleTime = 1_000_000_000 div ips
+  let timerTime = 1_000_000_000 div 60
 
-  var lastCycle = epochTime()
-  var lastTimer = epochTime()
+  var lastCycle = getMonoTime()
+  var lastTimer = getMonoTime()
 
   while true:
-    let now = epochTime()
+    let now = getMonoTime()
 
-    if now - lastCycle >= cycleTime:
+    if (now - lastCycle).inNanoseconds >= cycleTime:
       if debugMode:
         let opcode = (uint16(c.memory[c.pc]) shl 8) or uint16(c.memory[c.pc + 1])
         echo &"{c.pc:03X}: {opcode:04X} - {disassemble(opcode)}"
@@ -71,10 +71,11 @@ proc main() =
       i.pollInput(c)
       c.cycle()
       # For terminal mode, we clear keys after a cycle to simulate key up
-      for k in 0 ..< c.keys.len: c.keys[k] = false
+      if terminalMode:
+        for k in 0 ..< c.keys.len: c.keys[k] = false
       lastCycle = now
 
-    if now - lastTimer >= timerTime:
+    if (now - lastTimer).inNanoseconds >= timerTime:
       c.tickTimers()
       if c.soundTimer > 0:
         d.beep()

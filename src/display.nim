@@ -15,8 +15,9 @@ type
 proc initDisplay*(useTerminal: bool): Display =
   result = Display(useTerminal: useTerminal)
   if useTerminal:
-    hideCursor()
-    eraseScreen()
+    # Clear screen and hide cursor using standard ANSI
+    stdout.write("\x1B[2J\x1B[H\x1B[?25l")
+    stdout.flushFile()
   else:
     discard sdl2.init(INIT_VIDEO or INIT_AUDIO)
     result.window = createWindow("CHIP-8 Emulator", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, SCREEN_WIDTH * SCALE, SCREEN_HEIGHT * SCALE, SDL_WINDOW_SHOWN)
@@ -25,16 +26,16 @@ proc initDisplay*(useTerminal: bool): Display =
 
 proc render*(d: Display, c: Chip8) =
   if d.useTerminal:
-    setCursorPos(0, 0)
-    var frame = ""
+    # Move cursor to top-left
+    var output = "\x1B[H"
     for y in 0 ..< SCREEN_HEIGHT:
       for x in 0 ..< SCREEN_WIDTH:
         if c.display[y * SCREEN_WIDTH + x]:
-          frame.add("█")
+          output.add("█")
         else:
-          frame.add(" ")
-      frame.add("\n")
-    stdout.write(frame)
+          output.add(" ")
+      output.add("\n")
+    stdout.write(output)
     stdout.flushFile()
   elif d.window != nil:
     var pixels: array[SCREEN_WIDTH * SCREEN_HEIGHT, uint32]
@@ -50,12 +51,12 @@ proc beep*(d: Display) =
   if d.useTerminal:
     stdout.write("\a")
     stdout.flushFile()
-  # SDL2 beep can be added here with SDL_QueueAudio if needed
 
 proc cleanup*(d: Display) =
   if d.useTerminal:
-    showCursor()
-    eraseScreen()
+    # Show cursor and clear screen
+    stdout.write("\x1B[?25h\x1B[2J\x1B[H")
+    stdout.flushFile()
   elif d.window != nil:
     destroyTexture(d.texture)
     destroyRenderer(d.renderer)
