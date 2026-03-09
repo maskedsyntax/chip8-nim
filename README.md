@@ -1,18 +1,24 @@
-# CHIP-8 Emulator in Nim
+# CHIP-8 Emulator
 
-A minimal, self-contained CHIP-8 emulator written in Nim.
+A CHIP-8 virtual machine implemented in Nim. This project implements the core 35 opcodes, 64x32 display, 16-bit address space, and 60Hz timers.
 
-## Features
+## Technical Specifications
 
-- Full support for all 35 CHIP-8 opcodes.
-- Terminal-based rendering (ASCII/Unicode art).
-- Integrated disassembler and debugger.
-- 60Hz timers and adjustable instruction speed.
-- Zero external dependencies (uses Nim standard library).
+- **Memory**: 4KB (0x000-0xFFF). Programs start at 0x200.
+- **Registers**: 16 8-bit general purpose (V0-VF), one 16-bit address register (I), and a 16-bit program counter (PC).
+- **Stack**: 16 levels for subroutines.
+- **Timers**: 8-bit Delay and Sound timers decrementing at 60Hz.
+- **Display**: 64x32 monochrome with XOR sprite drawing and collision detection.
 
-## Building
+## Prerequisites
 
-Ensure you have [Nim](https://nim-lang.org/) installed.
+- Nim 2.0+
+- SDL2 development libraries (`libsdl2-dev` on Linux)
+- `nim-sdl2` package (`nimble install sdl2`)
+
+## Build Instructions
+
+Compile with the ORC memory manager and release optimizations:
 
 ```bash
 nim c -d:release --mm:orc --out:chip8 src/main.nim
@@ -20,26 +26,38 @@ nim c -d:release --mm:orc --out:chip8 src/main.nim
 
 ## Usage
 
-Run a ROM file:
+The emulator defaults to SDL2 windowed mode. Use the `--terminal` flag for raw terminal rendering.
+
 ```bash
-./chip8 path/to/rom.ch8
+./chip8 <path_to_rom> [options]
 ```
 
-### Options
-- `--debug`: Enable step-by-step state dumping.
-- `--disassemble`: Output the ROM disassembly and exit.
-- `--ips:N`: Set instructions per second (default: 600).
-- `--terminal`: Force terminal rendering mode (default).
+### Command Line Arguments
 
-## Controls (Mapping)
-CHIP-8 Keypad -> Keyboard
-1 2 3 C -> 1 2 3 4
-4 5 6 D -> Q W E R
-7 8 9 E -> A S D F
-A 0 B F -> Z X C V
+- `--terminal`: Force rendering in the terminal using Unicode characters.
+- `--debug`: Print PC, opcode disassembly, and register states to stdout for every cycle.
+- `--disassemble`: Print the full disassembly of the loaded ROM and exit.
+- `--ips:<int>`: Set the execution speed in instructions per second (default: 600).
+
+## Input Mapping
+
+The CHIP-8 4x4 keypad is mapped to the following QWERTY layout:
+
+| CHIP-8 | Key | | CHIP-8 | Key |
+| :--- | :--- | --- | :--- | :--- |
+| 1 | 1 | | C | 4 |
+| 4 | Q | | D | R |
+| 7 | A | | E | F |
+| A | Z | | F | V |
+| 2 | 2 | | 3 | 3 |
+| 5 | W | | 6 | E |
+| 8 | S | | 9 | D |
+| 0 | X | | B | C |
 
 ## Testing
-Run unit tests:
+
+Verify opcode correctness using the internal test suite:
+
 ```bash
 nim r tests/test_opcodes.nim
 ```
