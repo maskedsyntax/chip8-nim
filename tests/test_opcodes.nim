@@ -95,3 +95,71 @@ suite "CHIP-8 Opcode Tests":
     check c.memory[0x300] == 1
     check c.memory[0x301] == 2
     check c.memory[0x302] == 3
+
+  test "8XY1 - OR Vx, Vy":
+    c.v[0] = 0x0F
+    c.v[1] = 0xF0
+    c.memory[c.pc] = 0x80
+    c.memory[c.pc + 1] = 0x11
+    c.cycle()
+    check c.v[0] == 0xFF
+
+  test "8XY2 - AND Vx, Vy":
+    c.v[0] = 0xFF
+    c.v[1] = 0x0F
+    c.memory[c.pc] = 0x80
+    c.memory[c.pc + 1] = 0x12
+    c.cycle()
+    check c.v[0] == 0x0F
+
+  test "8XY3 - XOR Vx, Vy":
+    c.v[0] = 0xFF
+    c.v[1] = 0x0F
+    c.memory[c.pc] = 0x80
+    c.memory[c.pc + 1] = 0x13
+    c.cycle()
+    check c.v[0] == 0xF0
+
+  test "8XY6 - SHR Vx":
+    c.v[0] = 0x01 # 0000 0001
+    c.memory[c.pc] = 0x80
+    c.memory[c.pc + 1] = 0x06
+    c.cycle()
+    check c.v[0] == 0x00
+    check c.v[0xF] == 1
+
+    c.pc = ROM_START
+    c.v[0] = 0x02 # 0000 0010
+    c.cycle()
+    check c.v[0] == 0x01
+    check c.v[0xF] == 0
+
+  test "8XYE - SHL Vx":
+    c.v[0] = 0x80 # 1000 0000
+    c.memory[c.pc] = 0x80
+    c.memory[c.pc + 1] = 0x0E
+    c.cycle()
+    check c.v[0] == 0x00
+    check c.v[0xF] == 1
+
+  test "FX55 - LD [I], Vx":
+    c.i = 0x400
+    for i in 0 .. 3: c.v[i] = uint8(i + 1)
+    c.memory[c.pc] = 0xF3
+    c.memory[c.pc + 1] = 0x55
+    c.cycle()
+    check c.memory[0x400] == 1
+    check c.memory[0x401] == 2
+    check c.memory[0x402] == 3
+    check c.memory[0x403] == 4
+
+  test "FX65 - LD Vx, [I]":
+    c.i = 0x400
+    for i in 0 .. 3: c.memory[0x400 + i] = uint8(i + 5)
+    c.memory[c.pc] = 0xF3
+    c.memory[c.pc + 1] = 0x65
+    c.cycle()
+    check c.v[0] == 5
+    check c.v[1] == 6
+    check c.v[2] == 7
+    check c.v[3] == 8
