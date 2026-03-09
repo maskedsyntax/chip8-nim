@@ -53,8 +53,8 @@ proc main() =
 
   defer: d.cleanup()
 
-  let cycleTime = 1_000_000_000 div ips
-  let timerTime = 1_000_000_000 div 60
+  let cycleTimeNanos = 1_000_000_000 div ips
+  let timerTimeNanos = 1_000_000_000 div 60
 
   var lastCycle = getMonoTime()
   var lastTimer = getMonoTime()
@@ -62,7 +62,8 @@ proc main() =
   while true:
     let now = getMonoTime()
 
-    if (now - lastCycle).inNanoseconds >= cycleTime:
+    # Process instructions
+    while (now - lastCycle).inNanoseconds >= cycleTimeNanos:
       if debugMode:
         let opcode = (uint16(c.memory[c.pc]) shl 8) or uint16(c.memory[c.pc + 1])
         echo &"{c.pc:03X}: {opcode:04X} - {disassemble(opcode)}"
@@ -70,19 +71,19 @@ proc main() =
       
       i.pollInput(c)
       c.cycle()
-      # For terminal mode, we clear keys after a cycle to simulate key up
       if terminalMode:
         for k in 0 ..< c.keys.len: c.keys[k] = false
-      lastCycle = now
+      lastCycle = lastCycle + initDuration(nanoseconds = cycleTimeNanos)
 
-    if (now - lastTimer).inNanoseconds >= timerTime:
+    # Process timers and rendering
+    if (now - lastTimer).inNanoseconds >= timerTimeNanos:
       c.tickTimers()
       if c.soundTimer > 0:
         d.beep()
       d.render(c)
-      lastTimer = now
+      lastTimer = lastTimer + initDuration(nanoseconds = timerTimeNanos)
 
-    # Sleep a bit to prevent 100% CPU usage
+    # Small sleep to prevent pinning the CPU, but keep it tight
     os.sleep(1)
 
 if isMainModule:

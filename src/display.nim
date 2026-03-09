@@ -1,5 +1,5 @@
 # src/display.nim
-import std/terminal
+import std/[terminal, strutils]
 import ./chip8
 import sdl2
 
@@ -15,7 +15,7 @@ type
 proc initDisplay*(useTerminal: bool): Display =
   result = Display(useTerminal: useTerminal)
   if useTerminal:
-    # Clear screen and hide cursor using standard ANSI
+    # Clear screen and hide cursor
     stdout.write("\x1B[2J\x1B[H\x1B[?25l")
     stdout.flushFile()
   else:
@@ -28,13 +28,19 @@ proc render*(d: Display, c: Chip8) =
   if d.useTerminal:
     # Move cursor to top-left
     var output = "\x1B[H"
+    # Add a top border
+    output.add("+" & "-".repeat(SCREEN_WIDTH) & "+\n")
     for y in 0 ..< SCREEN_HEIGHT:
+      output.add("|")
       for x in 0 ..< SCREEN_WIDTH:
         if c.display[y * SCREEN_WIDTH + x]:
-          output.add("█")
+          output.add("#")
         else:
           output.add(" ")
-      output.add("\n")
+      output.add("|\n")
+    # Add a bottom border
+    output.add("+" & "-".repeat(SCREEN_WIDTH) & "+\n")
+    output.add("\n[Press Ctrl+C to Exit]\n")
     stdout.write(output)
     stdout.flushFile()
   elif d.window != nil:
