@@ -5,7 +5,7 @@ import ./chip8, ./display, ./input, ./debug
 proc main() =
   var filename = ""
   var debugMode = false
-  var terminalMode = true
+  var terminalMode = false
   var disassembleOnly = false
   var ips = 600
 
@@ -45,7 +45,11 @@ proc main() =
     return
 
   let d = initDisplay(terminalMode)
-  let i = initInput()
+  let i = initInput(terminalMode)
+
+  if terminalMode:
+    i.setRawMode()
+    defer: i.restoreMode()
 
   defer: d.cleanup()
 
@@ -72,6 +76,8 @@ proc main() =
 
     if now - lastTimer >= timerTime:
       c.tickTimers()
+      if c.soundTimer > 0:
+        d.beep()
       d.render(c)
       lastTimer = now
 
